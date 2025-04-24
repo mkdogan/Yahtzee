@@ -1,11 +1,14 @@
-Server\SClient$1.class
 Application\StartFrm.class
 Application\StartFrm$1.class
-Application\GameFrm.class
+Application\StartFrm$2.class
 Application\GameFrm$1.class
 Client\CClient.class
 Client\CClient$1.class
 Server\Message$Type.class
-Server\SClient.class
 Server\Server.class
+Server\SClient$1.class
+Server\Message$MsgContent.class
+Application\GameFrm.class
+Application\GameFrm$2.class
+Server\SClient.class
 Server\Message.class

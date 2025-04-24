@@ -17,11 +17,28 @@ public class Message {
         MSGFROMSERVER,
         TOCLIENT;
     }
+    
+    public enum MsgContent{
+        READY,
+        START,
+        STARTED,
+        TURN,
+        SCORE,
+        UPDATED
+    }
 
     public static String GenerateMsg(Message.Type type, String data) {
         //mtype#d1,d2,d3
-        String gmsg = " " + type + "#" + data;
+        String gmsg = type.toString().trim() + "#" + data.trim() + "\n";
         return gmsg;
     }
+    
+    
+    public static String GenerateMsg(Message.Type type, Object content) {
+        //mtype#d1,d2,d3
+        String gmsg = type.toString().trim() + "#" + content.toString().trim() + "\n";
+        return gmsg;
+    }
+  
 
 }

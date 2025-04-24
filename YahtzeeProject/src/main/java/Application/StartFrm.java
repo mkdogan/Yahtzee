@@ -5,6 +5,7 @@
 package Application;
 
 import Client.CClient;
+import Server.Message;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,17 +17,17 @@ import java.util.logging.Logger;
 public class StartFrm extends javax.swing.JFrame {
 
     CClient client;
+
     /**
      * Creates new form StartFrm
      */
-    public StartFrm() {
-        try {
-            initComponents();
-            this.client = new CClient("localhost", 6000);
-            this.client.Listen(client);
-        } catch (IOException ex) {
-            Logger.getLogger(StartFrm.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public StartFrm(CClient client) {
+
+        this.client = client;
+        client.startFrm = this;
+        initComponents();
+        lbl_waiting.setVisible(false);
+
     }
 
     /**
@@ -44,13 +45,20 @@ public class StartFrm extends javax.swing.JFrame {
         lbl_version = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         lbl_howTo = new javax.swing.JLabel();
+        lbl_waiting = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         lbl_header.setFont(new java.awt.Font("Segoe UI", 1, 36)); // NOI18N
         lbl_header.setText("YAHTZEE");
 
         btn_start.setText("Start");
+        btn_start.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_startActionPerformed(evt);
+            }
+        });
 
         lbl_version.setText("v1.0");
 
@@ -82,6 +90,9 @@ public class StartFrm extends javax.swing.JFrame {
             .addComponent(jSeparator1)
         );
 
+        lbl_waiting.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        lbl_waiting.setText("Waiting for other user...");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -91,22 +102,36 @@ public class StartFrm extends javax.swing.JFrame {
                 .addGap(93, 93, 93)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(btn_start, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lbl_header))
+                    .addComponent(lbl_header, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbl_waiting, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(52, Short.MAX_VALUE)
+                .addGap(47, 47, 47)
                 .addComponent(lbl_header)
-                .addGap(57, 57, 57)
+                .addGap(30, 30, 30)
                 .addComponent(btn_start)
-                .addGap(51, 51, 51)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
+                .addComponent(lbl_waiting)
+                .addGap(18, 18, 18)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btn_startActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_startActionPerformed
+        try {
+            // TODO add your handling code here:
+            client.sendReadyMessage();
+            this.btn_start.setEnabled(false);
+            lbl_waiting.setVisible(true);
+        } catch (IOException ex) {
+            Logger.getLogger(StartFrm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btn_startActionPerformed
 
     /**
      * @param args the command line arguments
@@ -138,7 +163,13 @@ public class StartFrm extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new StartFrm().setVisible(true);
+                try {
+                    CClient client = new CClient("localhost", 6000);
+                    client.Listen(client);
+                    new StartFrm(client).setVisible(true);
+                } catch (IOException ex) {
+                    Logger.getLogger(StartFrm.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
@@ -150,5 +181,6 @@ public class StartFrm extends javax.swing.JFrame {
     private javax.swing.JLabel lbl_header;
     private javax.swing.JLabel lbl_howTo;
     private javax.swing.JLabel lbl_version;
+    private javax.swing.JLabel lbl_waiting;
     // End of variables declaration//GEN-END:variables
 }

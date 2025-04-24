@@ -5,12 +5,10 @@
 package Server;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import static java.lang.Thread.sleep;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,6 +21,9 @@ public class Server implements Runnable {
     int clientId;
     ServerSocket ssocket;
     ArrayList<SClient> clients;
+    int currentTurnIndex = -1;
+    private final Object turnLock = new Object();
+    private final Object startLock = new Object();
 
     public Server(int port) throws IOException {
         this.clientId = 0;
@@ -46,17 +47,12 @@ public class Server implements Runnable {
 //        String msg = Message.GenerateMsg(Message.Type.CLIENTID, data);
 //        this.SendBroadcastMsg(msg.getBytes());
 //    }
+    public void SendMessageToClient(SClient client, String msg) throws IOException { //
+        String rmsg = Message.GenerateMsg(Message.Type.MSGFROMSERVER, msg);
+        client.SendMessage(rmsg.getBytes());
 
-    public void SendMessageToClient(int id, String msg) throws IOException {
-        for (SClient client : clients) {
-            if (client.id == id) {
-                String rmsg = Message.GenerateMsg(Message.Type.MSGFROMCLIENT, msg);
-                client.SendMessage(rmsg.getBytes());
-                break;
-            }
-        }
     }
-    
+
     public void SendIdToClient(int id, String msg) throws IOException {
         for (SClient client : clients) {
             if (client.id == id) {
@@ -67,9 +63,94 @@ public class Server implements Runnable {
         }
     }
 
-    public void SendBroadcastMsg(byte[] bmsg) throws IOException {
+    public void SendBroadcastMsg(String msg) throws IOException {
         for (SClient client : clients) {
-            client.SendMessage(bmsg);
+            SendMessageToClient(client, msg);
+        }
+    }
+
+    public boolean AreAllClientsReady() {
+
+        if (clients.size() < 2) {
+            return false;
+        }
+
+        for (SClient client : clients) {
+            if (!client.isReady) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean AreAllClientsStarted() {
+
+        if (clients.size() < 2) {
+            return false;
+        }
+
+        for (SClient client : clients) {
+            if (!client.isStarted) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean AreAllClientsUpdated() {
+
+        if (clients.size() < 2) {
+            return false;
+        }
+
+        for (SClient client : clients) {
+            if (!client.isUpdated) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * It checks whether it has received the 'STARTED' message from all clients.
+     * If it has, starts the game.
+     *
+     * @throws IOException
+     */
+    public void StartGame() throws IOException {
+        synchronized (startLock) {
+            
+            if (AreAllClientsStarted()) {
+                //System.out.println("Entered start game");
+                currentTurnIndex = RandomizeTurnIndex();
+                sendTurnToCurrentPlayer();
+
+            }
+        }
+    }
+
+    private int RandomizeTurnIndex() {
+        Random rnd = new Random();
+        return rnd.nextInt(clients.size()); // 0 or 1
+    }
+
+    public void nextTurn() throws IOException {
+        synchronized (turnLock) {
+
+            if (AreAllClientsUpdated()) {
+
+                currentTurnIndex = (currentTurnIndex + 1) % 2; // 0 or 1
+                sendTurnToCurrentPlayer();
+                //System.out.println("(Server) next turn executed");
+            }
+        }
+    }
+
+    private void sendTurnToCurrentPlayer() throws IOException {
+        SClient currentClient = clients.get(currentTurnIndex);
+        SendMessageToClient(currentClient, Message.MsgContent.TURN.toString());
+        for (SClient client : clients) {
+            client.isUpdated = false;
         }
     }
 
@@ -86,14 +167,16 @@ public class Server implements Runnable {
                     this.clients.add(newClient);                       // add client to list
                     String msg = Integer.toString(clientId);
                     this.SendIdToClient(newClient.id, msg);       // send client its id
-                }else{
+
+                } else {
                     //ignore the connection request
                 }
 
             }
 
         } catch (IOException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Server.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
 
     }
