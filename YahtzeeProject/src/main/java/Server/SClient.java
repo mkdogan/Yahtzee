@@ -39,7 +39,7 @@ public class SClient implements Runnable {
         server.clientId++;
     }
 
-    public synchronized void MsgParser(String msg) throws IOException {
+    public void MsgParser(String msg) throws IOException {
         String tokens[] = msg.split("#");
         Message.Type mt = Message.Type.valueOf(tokens[0].trim());
         switch (mt) {
@@ -61,15 +61,13 @@ public class SClient implements Runnable {
                         break;
 
                     case SCORE:
-                        // If valid, make calculations. Then broadcast resulting SCORE message
-                        this.broadcastScoreMessage();
+                        // Make calculations. Then send resulting SCORE message
+                        SendScoreMessage();
                         break;
                     case UPDATED:
-                        // Handle UPDATED message (Comes 2 UPDATED message)
-                        this.isUpdated = true;
+                        // Handle UPDATED message
                         ownerServer.nextTurn();
                         //System.out.println("(SClient) next turn executed");
-
                         break;
                 }
                 break;
@@ -131,5 +129,18 @@ public class SClient implements Runnable {
         //System.out.println("BroadcastScoreMessage");
         String msg = Message.MsgContent.SCORE.toString();
         ownerServer.SendBroadcastMsg(msg);
+    }
+
+    /**
+     * Sends score message to other client
+     * @throws IOException 
+     */
+    public void SendScoreMessage() throws IOException {
+        String msg = Message.MsgContent.SCORE.toString();
+        for (SClient client : ownerServer.clients) {
+            if (!this.coutput.equals(client.coutput)) {
+                ownerServer.SendMessageToClient(this, msg);
+            }
+        }
     }
 }

@@ -113,13 +113,13 @@ public class Server implements Runnable {
 
     /**
      * It checks whether it has received the 'STARTED' message from all clients.
-     * If it has, starts the game.
+     * If it has, starts the game. The method is synchronized
      *
      * @throws IOException
      */
     public void StartGame() throws IOException {
         synchronized (startLock) {
-            
+
             if (AreAllClientsStarted()) {
                 //System.out.println("Entered start game");
                 currentTurnIndex = RandomizeTurnIndex();
@@ -135,15 +135,9 @@ public class Server implements Runnable {
     }
 
     public void nextTurn() throws IOException {
-        synchronized (turnLock) {
-
-            if (AreAllClientsUpdated()) {
-
-                currentTurnIndex = (currentTurnIndex + 1) % 2; // 0 or 1
-                sendTurnToCurrentPlayer();
-                //System.out.println("(Server) next turn executed");
-            }
-        }
+        currentTurnIndex = (currentTurnIndex + 1) % 2; // 0 or 1
+        sendTurnToCurrentPlayer();
+        //System.out.println("(Server) next turn executed");
     }
 
     private void sendTurnToCurrentPlayer() throws IOException {
