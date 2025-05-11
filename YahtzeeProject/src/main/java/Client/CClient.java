@@ -58,7 +58,7 @@ public class CClient implements Runnable {
                             break;
                         case TURN:
                             // Handle Turn message
-                            gameFrm.getJButton().setEnabled(true);
+                            gameFrm.setTurn(true);
                             break;
                         case SCORE:
                             // Update UI

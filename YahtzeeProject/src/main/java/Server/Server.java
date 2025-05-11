@@ -143,9 +143,8 @@ public class Server implements Runnable {
     private void sendTurnToCurrentPlayer() throws IOException {
         SClient currentClient = clients.get(currentTurnIndex);
         SendMessageToClient(currentClient, Message.MsgContent.TURN.toString());
-        for (SClient client : clients) {
-            client.isUpdated = false;
-        }
+        currentClient.isUpdated = false;
+
     }
 
     @Override
