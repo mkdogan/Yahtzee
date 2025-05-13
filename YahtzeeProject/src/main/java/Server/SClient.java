@@ -61,8 +61,13 @@ public class SClient implements Runnable {
                         break;
 
                     case SCORE:
-                        // Make calculations. Then send resulting SCORE message
-                        SendScoreMessage();
+                        // Send resulting SCORE message to other client
+                        for (String token : tokens) {
+                            int i = 0;
+                            System.out.println(i + " : " + token);
+                            i++;
+                        }
+                        SendScoreMessage(tokens[2], tokens[3]);
                         break;
                     case UPDATED:
                         // Handle UPDATED message
@@ -135,11 +140,12 @@ public class SClient implements Runnable {
      * Sends score message to other client
      * @throws IOException 
      */
-    public void SendScoreMessage() throws IOException {
+    public void SendScoreMessage(String rowIndex, String score) throws IOException {
         String msg = Message.MsgContent.SCORE.toString();
         for (SClient client : ownerServer.clients) {
             if (!this.coutput.equals(client.coutput)) {
-                ownerServer.SendMessageToClient(this, msg);
+                msg += "#" + rowIndex + "#" + score;
+                ownerServer.SendMessageToClient(client, msg);
             }
         }
     }

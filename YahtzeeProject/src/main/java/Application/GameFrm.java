@@ -66,6 +66,10 @@ public class GameFrm extends javax.swing.JFrame {
         // Set the client ID as window title
         setTitle("Yahtzee - Client " + client.getId());
     }
+    
+    public TableModel getScoreTableModel(){
+        return this.scoreTableModel;
+    }
 
     /**
      * Initialize custom components for the Yahtzee game
@@ -74,7 +78,7 @@ public class GameFrm extends javax.swing.JFrame {
         // Main panel with green background
         mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        mainPanel.setBackground(new Color(74, 37, 0)); // Dark green background
+        mainPanel.setBackground(new Color(74, 37, 0)); // Dark brown background
 
         // Player info panel
         JPanel infoPanel = new JPanel(new BorderLayout());
@@ -141,7 +145,7 @@ public class GameFrm extends javax.swing.JFrame {
         // Score table
         createScoreTable();
         JScrollPane scoreScrollPane = new JScrollPane(scoreTable);
-        scoreScrollPane.setPreferredSize(new Dimension(300, 400));
+        scoreScrollPane.setPreferredSize(new Dimension(350, 400));
 
         // Add components to main panel
         mainPanel.add(infoPanel, BorderLayout.NORTH);
@@ -160,26 +164,26 @@ public class GameFrm extends javax.swing.JFrame {
      */
     private void createScoreTable() {
         // Score table column names
-        String[] columnNames = {"Category", "Score"};
+        String[] columnNames = {"Category", "You", "Opponent"};
 
         // Score table data
         Object[][] data = {
-            {"Ones", null},
-            {"Twos", null},
-            {"Threes", null},
-            {"Fours", null},
-            {"Fives", null},
-            {"Sixes", null},
-            {"Subtotal", 0},
-            {"Bonus (35)", 0},
-            {"Three of a Kind", null},
-            {"Four of a Kind", null},
-            {"Full House", null},
-            {"Small Straight", null},
-            {"Large Straight", null},
-            {"Chance", null},
-            {"Yahtzee", null},
-            {"Total Score", 0}
+            {"Ones", null, null},
+            {"Twos", null, null},
+            {"Threes", null, null},
+            {"Fours", null, null},
+            {"Fives", null, null},
+            {"Sixes", null, null},
+            {"Subtotal", 0, 0},
+            {"Bonus (35)", 0, 0},
+            {"Three of a Kind", null, null},
+            {"Four of a Kind", null, null},
+            {"Full House", null, null},
+            {"Small Straight", null, null},
+            {"Large Straight", null, null},
+            {"Chance", null, null},
+            {"Yahtzee", null, null},
+            {"Total Score", 0, 0}
         };
 
         // Create table model
@@ -196,6 +200,8 @@ public class GameFrm extends javax.swing.JFrame {
 
         // Category column cell renderer
         scoreTable.getColumnModel().getColumn(0).setCellRenderer(new CategoryCellRenderer());
+        //scoreTable.getColumnModel().getColumn(0).setPreferredWidth(150);
+
 
         // Add click listener for selecting categories
         scoreTable.addMouseListener(new ScoreTableClickListener());
@@ -313,12 +319,13 @@ public class GameFrm extends javax.swing.JFrame {
         if (rowIndex == 6 || rowIndex == 7 || rowIndex == 15) {
             return;
         }
-        
+
         // if there is a score in the cell, dont click
-        if (scoreTableModel.getValueAt(rowIndex, 1) instanceof Integer){
+        if (scoreTableModel.getValueAt(rowIndex, 1) instanceof Integer) {
             return;
         }
 
+        // 
         // Calculate score for selected category
         int score = calculateScore(rowIndex);
 
@@ -335,7 +342,7 @@ public class GameFrm extends javax.swing.JFrame {
 
         // Send score to server
         try {
-            client.sendScoreMessage();
+            client.sendScoreMessage(rowIndex, score);
         } catch (IOException ex) {
             Logger.getLogger(GameFrm.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -477,11 +484,11 @@ public class GameFrm extends javax.swing.JFrame {
             }
         }
     }
-    
+
     /**
      * Removes hint scores after selection
      */
-    private void removeHintScores(){
+    private void removeHintScores() {
         for (int i = 0; i < 15; i++) {
             Object val = scoreTableModel.getValueAt(i, 1);
             if (val instanceof String && ((String) val).contains("gray")) {
@@ -506,15 +513,6 @@ public class GameFrm extends javax.swing.JFrame {
 
         // Change turn
         setTurn(false);
-    }
-
-    /**
-     * Get the button from original code (compatibility method)
-     *
-     * @return the button from the original code
-     */
-    public JButton getJButton() {
-        return rollButton;
     }
 
     /**
@@ -550,7 +548,9 @@ public class GameFrm extends javax.swing.JFrame {
         @Override
         public void mouseClicked(MouseEvent e) {
             int row = scoreTable.rowAtPoint(e.getPoint());
-            if (row >= 0) {
+            int column = scoreTable.columnAtPoint(e.getPoint());
+
+            if (row >= 0 && column == 1) { // column 1 is score column of the player 
                 selectCategory(row);
             }
         }
