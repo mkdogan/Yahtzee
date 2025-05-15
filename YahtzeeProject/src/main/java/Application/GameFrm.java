@@ -46,6 +46,7 @@ public class GameFrm extends javax.swing.JFrame {
 
     // Game state
     private boolean isMyTurn;
+    private byte filledCount = 0;
 
     /**
      * Creates new form GameFrm
@@ -66,8 +67,8 @@ public class GameFrm extends javax.swing.JFrame {
         // Set the client ID as window title
         setTitle("Yahtzee - Client " + client.getId());
     }
-    
-    public TableModel getScoreTableModel(){
+
+    public TableModel getScoreTableModel() {
         return this.scoreTableModel;
     }
 
@@ -202,7 +203,6 @@ public class GameFrm extends javax.swing.JFrame {
         scoreTable.getColumnModel().getColumn(0).setCellRenderer(new CategoryCellRenderer());
         //scoreTable.getColumnModel().getColumn(0).setPreferredWidth(150);
 
-
         // Add click listener for selecting categories
         scoreTable.addMouseListener(new ScoreTableClickListener());
     }
@@ -228,6 +228,7 @@ public class GameFrm extends javax.swing.JFrame {
 
         // Reset score table
         scoreTableModel.resetScores();
+        filledCount = 0;
 
         // Reset rolls
         rollsLeft = 3;
@@ -324,7 +325,7 @@ public class GameFrm extends javax.swing.JFrame {
         if (scoreTableModel.getValueAt(rowIndex, 1) instanceof Integer) {
             return;
         }
-
+        filledCount++; // count the filled areas
         // 
         // Calculate score for selected category
         int score = calculateScore(rowIndex);
@@ -342,7 +343,7 @@ public class GameFrm extends javax.swing.JFrame {
 
         // Send score to server
         try {
-            client.sendScoreMessage(rowIndex, score);
+            client.sendScoreMessage(rowIndex, score, filledCount);
         } catch (IOException ex) {
             Logger.getLogger(GameFrm.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -515,6 +516,40 @@ public class GameFrm extends javax.swing.JFrame {
         setTurn(false);
     }
 
+    public void showGameOverDialog(int myScore, int opponentScore) {
+        SwingUtilities.invokeLater(() -> {
+            String result;
+            if (myScore > opponentScore) {
+                result = "You win!";
+            } else if (myScore < opponentScore) {
+                result = "You lost!";
+            } else {
+                result = "Draw!";
+            }
+
+            result += "\nWould you like to play again?";
+
+            int option = JOptionPane.showConfirmDialog(
+                    this,
+                    result,
+                    "Game Over",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            new Thread(() -> {
+                try {
+                    if (option == JOptionPane.YES_OPTION) {
+                        client.sendReplayRequest(); // yeni oyun isteği gönder
+                    } else {
+                        client.sendGameOverMessage();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        });
+    }
+
     /**
      * Event listener for dice buttons
      */
@@ -673,8 +708,10 @@ public class GameFrm extends javax.swing.JFrame {
             for (int i = 0; i < getRowCount(); i++) {
                 if (i != 6 && i != 7 && i != 15) {
                     setValueAt(null, i, 1);
+                    setValueAt(null, i, 2);
                 } else {
                     setValueAt(0, i, 1);
+                    setValueAt(0, i, 2);
                 }
             }
         }

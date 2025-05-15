@@ -24,7 +24,10 @@ public class Message {
         STARTED,
         TURN,
         SCORE,
-        UPDATED
+        UPDATED,
+        GAME_OVER,
+        REPLAY,
+        FINISH
     }
 
     public static String GenerateMsg(Message.Type type, String data) {

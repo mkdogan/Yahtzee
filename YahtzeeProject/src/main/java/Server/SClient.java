@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Iterator;
 import java.util.Random;
 
 /**
@@ -27,6 +28,8 @@ public class SClient implements Runnable {
     boolean isReady = false;
     boolean isStarted = false;
     boolean isUpdated = false;
+    boolean isFinished = false;
+    boolean wantsReplay = false;
     private final Object broadcastStartLock = new Object();
 
     public SClient(Socket connectedSocket, Server server) throws IOException {
@@ -54,25 +57,30 @@ public class SClient implements Runnable {
                         this.isReady = true;
                         this.broadcastStartMessage();
                         break;
-
                     case STARTED:
                         this.isStarted = true;
                         ownerServer.StartGame();
                         break;
-
                     case SCORE:
                         // Send resulting SCORE message to other client
-                        for (String token : tokens) {
-                            int i = 0;
-                            System.out.println(i + " : " + token);
-                            i++;
-                        }
-                        SendScoreMessage(tokens[2], tokens[3]);
+                        sendScoreMessage(tokens[2], tokens[3]);
+                        byte filledCount = Byte.parseByte(tokens[4]);
+                        isClientFinished(filledCount);
+                        checkGameOverMessage();
                         break;
                     case UPDATED:
                         // Handle UPDATED message
                         ownerServer.nextTurn();
                         //System.out.println("(SClient) next turn executed");
+                        break;
+                    case GAME_OVER:
+                        // broadcast finish message
+                        broadcastFinishMessage();
+                        //deleteClients();
+                        break;
+                    case REPLAY:
+                        this.wantsReplay = true;
+                        broadcastReplayMessage();
                         break;
                 }
                 break;
@@ -80,6 +88,21 @@ public class SClient implements Runnable {
                 throw new AssertionError();
         }
 
+    }
+    
+    private void deleteClients(){
+        Iterator<SClient> iterator = ownerServer.clients.iterator();
+                        while (iterator.hasNext()) {
+                            SClient client = iterator.next();
+                            try {
+                                client.cinput.close();
+                                client.coutput.close();
+                                client.csocket.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            iterator.remove(); // safely delete from list
+                        }
     }
 
     public void StartListening(SClient client) {
@@ -120,8 +143,10 @@ public class SClient implements Runnable {
                 //System.out.println("Entered broadcastStartMessage");
                 String msg = Message.MsgContent.START.toString();
                 ownerServer.SendBroadcastMsg(msg);
+                for (SClient client : ownerServer.clients) {
+                    client.isReady = false;
+                }
             }
-
         }
     }
 
@@ -138,9 +163,10 @@ public class SClient implements Runnable {
 
     /**
      * Sends score message to other client
-     * @throws IOException 
+     *
+     * @throws IOException
      */
-    public void SendScoreMessage(String rowIndex, String score) throws IOException {
+    public void sendScoreMessage(String rowIndex, String score) throws IOException {
         String msg = Message.MsgContent.SCORE.toString();
         for (SClient client : ownerServer.clients) {
             if (!this.coutput.equals(client.coutput)) {
@@ -149,4 +175,45 @@ public class SClient implements Runnable {
             }
         }
     }
+
+    private void isClientFinished(byte filledCount) throws IOException {
+        if (filledCount == 13) {
+            isFinished = true;
+        } else {
+            isFinished = false;
+        }
+    }
+
+    private synchronized void checkGameOverMessage() throws IOException {
+        boolean gameFinished = true;
+        for (SClient client : ownerServer.clients) {
+            if (!client.isFinished) {
+                gameFinished = false;
+            }
+        }
+        if (gameFinished) {
+            broadcastGameOverMessage();
+        }
+    }
+
+    private void broadcastGameOverMessage() throws IOException {
+        String msg = Message.MsgContent.GAME_OVER.toString();
+        ownerServer.SendBroadcastMsg(msg);
+    }
+    
+    private void broadcastFinishMessage() throws IOException {
+        String msg = Message.MsgContent.FINISH.toString();
+        ownerServer.SendBroadcastMsg(msg);
+    }
+    
+    private synchronized void broadcastReplayMessage() throws IOException{
+        if (ownerServer.areAllClientsRequestsReplay()){
+            String msg = Message.MsgContent.REPLAY.toString();
+            ownerServer.SendBroadcastMsg(msg);
+            for (SClient client : ownerServer.clients) {
+                client.wantsReplay = false;
+            }
+        }
+    }
+
 }

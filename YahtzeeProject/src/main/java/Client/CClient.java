@@ -56,8 +56,6 @@ public class CClient implements Runnable {
                     switch (mc) {
                         case START:
                             this.openGameFrm();
-                            scoreTableModel = gameFrm.getScoreTableModel();
-                            this.sendStartedMessage();
                             break;
                         case TURN:
                             // Handle Turn message
@@ -71,6 +69,23 @@ public class CClient implements Runnable {
                             updateTotalScores();
                             // send update message
                             this.sendUpdatedMessage();
+                            break;
+                        case GAME_OVER:
+                            int myScore = (Integer) scoreTableModel.getValueAt(15, 1);
+                            int opponentScore = (Integer) scoreTableModel.getValueAt(15, 2);
+                            gameFrm.showGameOverDialog(myScore, opponentScore);
+                            break;
+                        case FINISH:
+                            /*
+                            cinput.close();
+                            coutput.close();
+                            csocket.close();
+                            */
+                            gameFrm.dispose();
+                            startFrm.setVisible(true);
+                            break;
+                        case REPLAY:
+                            gameFrm.resetGame();
                             break;
                         default:
                             throw new AssertionError();
@@ -100,12 +115,28 @@ public class CClient implements Runnable {
         return this.id;
     }
 
+    /**
+     * This method is responsible for opening game frame and setting start frame to its initial state.
+     * When game frame opened, send STARTED message to server.
+     */
     private void openGameFrm() {
-        if (startFrm != null) {
-            startFrm.dispose();
+        javax.swing.SwingUtilities.invokeLater(() -> {
+        if (startFrm.isVisible()) {
+            startFrm.setVisible(false);
+            startFrm.getLbl_waiting().setVisible(false);
+            startFrm.getBtn_start().setEnabled(true);
         }
         gameFrm = new GameFrm(this);
         gameFrm.setVisible(true);
+        
+        scoreTableModel = gameFrm.getScoreTableModel();
+
+        try {
+            this.sendStartedMessage();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    });    
     }
 
     public void sendStartedMessage() throws IOException {
@@ -118,10 +149,10 @@ public class CClient implements Runnable {
         this.SendMessage(rmsg);
     }
 
-    public void sendScoreMessage(int rowIndex, int score) throws IOException {
+    public void sendScoreMessage(int rowIndex, int score, byte filledCount) throws IOException {
         String rmsg = Message.GenerateMsg(Message.Type.MSGFROMCLIENT, Message.MsgContent.SCORE);
         rmsg = rmsg.trim();
-        rmsg += "#" + rowIndex + "#" + score + "\n";
+        rmsg += "#" + rowIndex + "#" + score + "#" + filledCount + "\n";
         this.SendMessage(rmsg);
     }
 
@@ -129,9 +160,30 @@ public class CClient implements Runnable {
         String rmsg = Message.GenerateMsg(Message.Type.MSGFROMCLIENT, Message.MsgContent.UPDATED);
         this.SendMessage(rmsg);
     }
+
+    public void sendGameOverMessage() throws IOException {
+        String rmsg = Message.GenerateMsg(Message.Type.MSGFROMCLIENT, Message.MsgContent.GAME_OVER);
+        rmsg = rmsg.trim();
+        rmsg += "#" + this.id + "\n";
+        this.SendMessage(rmsg);
+    }
+
+    public void sendFinishMessage() throws IOException {
+        String rmsg = Message.GenerateMsg(Message.Type.MSGFROMCLIENT, Message.MsgContent.FINISH);
+        rmsg = rmsg.trim();
+        rmsg += "#" + this.id + "\n";
+        this.SendMessage(rmsg);
+    }
     
+    public void sendReplayRequest() throws IOException{
+        String rmsg = Message.GenerateMsg(Message.Type.MSGFROMCLIENT, Message.MsgContent.REPLAY);
+        rmsg = rmsg.trim();
+        rmsg += "#" + this.id + "\n";
+        this.SendMessage(rmsg);
+    }
+
     /**
-     * Update total scores in the score table
+     * Update opponents total scores in the score table
      */
     private void updateTotalScores() {
         // Upper section subtotal (1-6)

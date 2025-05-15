@@ -9,6 +9,8 @@ import Server.Message;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JButton;
+import javax.swing.JLabel;
 
 /**
  *
@@ -183,4 +185,12 @@ public class StartFrm extends javax.swing.JFrame {
     private javax.swing.JLabel lbl_version;
     private javax.swing.JLabel lbl_waiting;
     // End of variables declaration//GEN-END:variables
+
+    public JButton getBtn_start() {
+        return btn_start;
+    }
+
+    public JLabel getLbl_waiting() {
+        return lbl_waiting;
+    }
 }

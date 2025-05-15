@@ -110,6 +110,20 @@ public class Server implements Runnable {
         }
         return true;
     }
+    
+    public boolean areAllClientsRequestsReplay(){
+        
+        if (clients.size() < 2) {
+            return false;
+        }
+
+        for (SClient client : clients) {
+            if (!client.wantsReplay) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     /**
      * It checks whether it has received the 'STARTED' message from all clients.
@@ -124,7 +138,9 @@ public class Server implements Runnable {
                 //System.out.println("Entered start game");
                 currentTurnIndex = RandomizeTurnIndex();
                 sendTurnToCurrentPlayer();
-
+                for (SClient client : clients) {
+                    client.isStarted = false;
+                }
             }
         }
     }
