@@ -89,20 +89,20 @@ public class SClient implements Runnable {
         }
 
     }
-    
-    private void deleteClients(){
+
+    private void deleteClients() {
         Iterator<SClient> iterator = ownerServer.clients.iterator();
-                        while (iterator.hasNext()) {
-                            SClient client = iterator.next();
-                            try {
-                                client.cinput.close();
-                                client.coutput.close();
-                                client.csocket.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            iterator.remove(); // safely delete from list
-                        }
+        while (iterator.hasNext()) {
+            SClient client = iterator.next();
+            try {
+                client.cinput.close();
+                client.coutput.close();
+                client.csocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            iterator.remove(); // safely delete from list
+        }
     }
 
     public void StartListening(SClient client) {
@@ -124,11 +124,18 @@ public class SClient implements Runnable {
             System.out.println("SClient run() exception");
             this.ownerServer.clients.remove(this);
 
+            try {
+                // Opponent has been disconnected
+                for (SClient client : ownerServer.clients) {
+                    ownerServer.SendMessageToClient(client, Message.MsgContent.OPPONENT_DISCONNECTED.toString());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+}
 
-    }
-
-    public void SendMessage(byte[] msg) throws IOException {
+public void SendMessage(byte[] msg) throws IOException {
 
         this.coutput.write(msg);
     }

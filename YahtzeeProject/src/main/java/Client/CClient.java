@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import Application.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import javax.swing.JOptionPane;
 import javax.swing.table.TableModel;
 
 /**
@@ -80,12 +81,17 @@ public class CClient implements Runnable {
                             cinput.close();
                             coutput.close();
                             csocket.close();
-                            */
+                             */
                             gameFrm.dispose();
                             startFrm.setVisible(true);
                             break;
                         case REPLAY:
                             gameFrm.resetGame();
+                            break;
+                        case OPPONENT_DISCONNECTED:
+                            gameFrm.showDisconnectedMessage();
+                            gameFrm.dispose();
+                            startFrm.setVisible(true);
                             break;
                         default:
                             throw new AssertionError();
@@ -116,27 +122,28 @@ public class CClient implements Runnable {
     }
 
     /**
-     * This method is responsible for opening game frame and setting start frame to its initial state.
-     * When game frame opened, send STARTED message to server.
+     * This method is responsible for opening game frame and setting start frame
+     * to its initial state. When game frame opened, send STARTED message to
+     * server.
      */
     private void openGameFrm() {
         javax.swing.SwingUtilities.invokeLater(() -> {
-        if (startFrm.isVisible()) {
-            startFrm.setVisible(false);
-            startFrm.getLbl_waiting().setVisible(false);
-            startFrm.getBtn_start().setEnabled(true);
-        }
-        gameFrm = new GameFrm(this);
-        gameFrm.setVisible(true);
-        
-        scoreTableModel = gameFrm.getScoreTableModel();
+            if (startFrm.isVisible()) {
+                startFrm.setVisible(false);
+                startFrm.getLbl_waiting().setVisible(false);
+                startFrm.getBtn_start().setEnabled(true);
+            }
+            gameFrm = new GameFrm(this);
+            gameFrm.setVisible(true);
 
-        try {
-            this.sendStartedMessage();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    });    
+            scoreTableModel = gameFrm.getScoreTableModel();
+
+            try {
+                this.sendStartedMessage();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
     }
 
     public void sendStartedMessage() throws IOException {
@@ -174,8 +181,8 @@ public class CClient implements Runnable {
         rmsg += "#" + this.id + "\n";
         this.SendMessage(rmsg);
     }
-    
-    public void sendReplayRequest() throws IOException{
+
+    public void sendReplayRequest() throws IOException {
         String rmsg = Message.GenerateMsg(Message.Type.MSGFROMCLIENT, Message.MsgContent.REPLAY);
         rmsg = rmsg.trim();
         rmsg += "#" + this.id + "\n";

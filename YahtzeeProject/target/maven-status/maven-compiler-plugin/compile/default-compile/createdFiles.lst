@@ -2,7 +2,6 @@ Application\StartFrm.class
 Application\StartFrm$1.class
 Application\StartFrm$2.class
 Application\GameFrm$DiceButton.class
-Application\GameFrm$1.class
 Application\GameFrm$RollDiceListener.class
 Client\CClient.class
 Application\GameFrm$ScoreTableClickListener.class

@@ -27,7 +27,8 @@ public class Message {
         UPDATED,
         GAME_OVER,
         REPLAY,
-        FINISH
+        FINISH,
+        OPPONENT_DISCONNECTED
     }
 
     public static String GenerateMsg(Message.Type type, String data) {
