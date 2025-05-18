@@ -166,7 +166,7 @@ public class StartFrm extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    CClient client = new CClient("localhost", 6000);
+                    CClient client = new CClient("ec2-3-127-136-58.eu-central-1.compute.amazonaws.com", 5999);
                     client.Listen(client);
                     new StartFrm(client).setVisible(true);
                 } catch (IOException ex) {

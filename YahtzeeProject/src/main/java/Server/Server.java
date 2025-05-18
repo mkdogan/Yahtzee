@@ -192,7 +192,7 @@ public class Server implements Runnable {
 
     public static void main(String[] args) {
         try {
-            Server s1 = new Server(6000);
+            Server s1 = new Server(5999);
             s1.StartAcceptance(s1);
 
             while (true) {
