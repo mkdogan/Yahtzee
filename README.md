@@ -30,6 +30,14 @@
 This project is a **networked multiplayer Yahtzee game** developed in **Java** using a **Client-Server architecture**.  
 Two players compete in real-time over a network connection following standard Yahtzee rules: roll dice, choose scoring categories, and aim for the highest score.
 
+This project is a **networked multiplayer Yahtzee game** developed in Java using a **Client–Server architecture.**
+The game supports real-time, two-player matches conducted over a network connection while strictly following standard Yahtzee rules, including dice rolling, score category selection, and score calculation.
+
+The system is designed to support **multiple concurrent game rooms**, allowing different pairs of players to play independent Yahtzee matches simultaneously on the same server.
+
+If one player disconnects during an active game, the match is immediately terminated to maintain game integrity.
+At the end of each game, players are prompted with a replay option, enabling them to start a new game session without restarting the application.
+
 ---
 
 ## 2. System Architecture
